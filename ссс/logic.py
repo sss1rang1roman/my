@@ -11,7 +11,7 @@ class DB_Manager:
     def create_tables(self):
         conn = sqlite3.connect(self.database)
         with conn:
-            conn.execute('''CREATE TABLE projects (
+            conn.execute('''CREATE TABLE IF NOT EXISTS projects (
                             project_id INTEGER PRIMARY KEY,
                             user_id INTEGER,
                             project_name TEXT NOT NULL,
@@ -20,17 +20,17 @@ class DB_Manager:
                             status_id INTEGER,
                             FOREIGN KEY(status_id) REFERENCES status(status_id)
                         )''') 
-            conn.execute('''CREATE TABLE skills (
+            conn.execute('''CREATE TABLE IF NOT EXISTS skills (
                             skill_id INTEGER PRIMARY KEY,
                             skill_name TEXT
                         )''')
-            conn.execute('''CREATE TABLE project_skills (
+            conn.execute('''CREATE TABLE IF NOT EXISTS project_skills (
                             project_id INTEGER,
                             skill_id INTEGER,
                             FOREIGN KEY(project_id) REFERENCES projects(project_id),
                             FOREIGN KEY(skill_id) REFERENCES skills(skill_id)
                         )''')
-            conn.execute('''CREATE TABLE status (
+            conn.execute('''CREATE TABLE IF NOT EXISTS status (
                             status_id INTEGER PRIMARY KEY,
                             status_name TEXT
                         )''')
@@ -57,11 +57,11 @@ class DB_Manager:
         data = statuses
         self.__executemany(sql, data)
 
-    #dobavit
+
     def insert_project(self, data):
         sql = """INSERT INTO projects 
-                (user_id, project_name, url, status_id) 
-                VALUES(?, ?, ?, ?)"""
+                (user_id, project_name, description, url, status_id) 
+                VALUES(?, ?, ?, ?, ?)""" 
         self.__executemany(sql, data)
 
 
@@ -129,8 +129,20 @@ class DB_Manager:
         self.__executemany(sql, [(project_id, skill_id)])
 
 
+def add_photo_column():
+    conn = sqlite3.connect(DATABASE)
+    cursor = conn.cursor()
+    try:
+        cursor.execute("ALTER TABLE projects ADD COLUMN photo_url TEXT")
+        print("✅ Добавил столбец photo_url")
+        conn.commit()
+    except Exception as e:
+        print(f"ℹ️ {e}")
+    finally:
+        conn.close()
+
 
 if __name__ == '__main__':
     manager = DB_Manager(DATABASE)
+    manager.create_tables()  
     manager.default_insert()
-    manager.insert_project([1 , "Бот"])
